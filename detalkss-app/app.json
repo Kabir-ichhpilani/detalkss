@@ -24,7 +24,15 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.detalkssapp"
+      "package": "com.anonymous.detalkssapp",
+      "permissions": [
+        "WAKE_LOCK",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "BLUETOOTH",
+        "BLUETOOTH_CONNECT",
+        "CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",

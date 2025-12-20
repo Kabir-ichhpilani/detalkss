@@ -11,6 +11,10 @@ import matchmaker from "./socket/matchmaker.js";
 import callHandler from "./socket/callHandler.js";
 dotenv.config();
 
+if (!process.env.CLERK_PUBLISHABLE_KEY || !process.env.CLERK_SECRET_KEY) {
+    console.warn("⚠️  WARNING: Clerk keys are missing in .env! Authentication will fail.");
+}
+
 const app = express();
 const server = http.createServer(app);
 

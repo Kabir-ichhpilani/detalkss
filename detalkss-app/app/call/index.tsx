@@ -4,6 +4,7 @@ import { RTCView } from 'react-native-webrtc';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useUser } from '@clerk/clerk-expo';
 import { socket } from '@/utils/socket';
 import { ensureMicPermission } from "@/utils/permisions";
 import {
@@ -17,11 +18,13 @@ import {
     peerConnection,
     localStream
 } from "@/utils/webrtc";
+import { updateStreak } from "@/utils/streak";
 import AudioDebugger from '@/components/AudioDebugger';
 
 const { width, height } = Dimensions.get('window');
 
 export default function CallScreen() {
+    const { user } = useUser();
     const [status, setStatus] = useState("idle");
     const [partnerId, setPartnerId] = useState(null);
     const [roomId, setRoomId] = useState(null);
@@ -129,6 +132,9 @@ export default function CallScreen() {
                         setRemoteStream(stream);
                         setConnectionStatus("Connected - Audio active");
                         setDebuggerKey(prev => prev + 1);
+                        if (user?.id) {
+                            updateStreak(user.id).then(s => console.log("🔥 [Call] Streak updated:", s));
+                        }
                     },
                 });
 

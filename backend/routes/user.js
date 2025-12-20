@@ -13,7 +13,7 @@ router.get("/", requireAuth(), async (req, res) => {
     }
 });
 
-router.post("/save", requireAuth(), async (req, res) => {
+router.post("/save", async (req, res) => {
     try {
         const { clerkId, email, username, gender, problem, condition } = req.body;
 
