@@ -37,6 +37,7 @@ const InitialLayout = () => {
     if (!isLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isCallback = (segments[0] as string) === 'oauth-native-callback';
 
     console.log("Auth State Changed:", { isSignedIn, segments, inAuthGroup });
 
@@ -44,7 +45,7 @@ const InitialLayout = () => {
       // If user is signed in and trying to access auth pages OR is at the root directory
       console.log("Redirecting to /home");
       router.replace('/home');
-    } else if (!isSignedIn && !inAuthGroup) {
+    } else if (!isSignedIn && !inAuthGroup && !isCallback) { // Don't redirect if it's the callback
       // If user is not signed in and not in the auth group
       console.log("Redirecting to /sign-up");
       router.replace('/(auth)/sign-up');

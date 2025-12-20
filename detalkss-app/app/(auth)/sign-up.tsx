@@ -8,7 +8,9 @@ export default function SignUpScreen() {
 
     const handleGoogle = async () => {
         try {
-            const { createdSessionId, setActive } = await startOAuthFlow();
+            const { createdSessionId, setActive } = await startOAuthFlow({
+                redirectUrl: "detalkssapp://oauth-native-callback",
+            });
 
             if (createdSessionId && setActive) {
                 await setActive({ session: createdSessionId });

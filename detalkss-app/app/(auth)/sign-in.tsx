@@ -1,18 +1,19 @@
 import { View, Button } from "react-native";
-import { useSSO } from "@clerk/clerk-expo";
+import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 
 export default function SignInScreen() {
-    const { startSSOFlow } = useSSO();
+    const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
 
     async function handleGoogle() {
         try {
-            const { createdSessionId } = await startSSOFlow({
-                strategy: "oauth_google",
+            const { createdSessionId, setActive } = await startOAuthFlow({
+                redirectUrl: "detalkssapp://oauth-native-callback",
             });
 
-            if (createdSessionId) {
-                router.replace("/home"); // redirect after login
+            if (createdSessionId && setActive) {
+                await setActive({ session: createdSessionId });
+                // router.replace("/home"); // Let _layout.tsx handle navigation based on auth state
             }
         } catch (err) {
             console.log("Google Sign-in Error:", err);

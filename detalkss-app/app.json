@@ -31,6 +31,12 @@
         "MODIFY_AUDIO_SETTINGS",
         "BLUETOOTH",
         "BLUETOOTH_CONNECT",
+        "CAMERA",
+        "WAKE_LOCK",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "BLUETOOTH",
+        "BLUETOOTH_CONNECT",
         "CAMERA"
       ]
     },
@@ -52,6 +58,12 @@
       "eas": {
         "projectId": "12fb4f62-6a49-48b0-9e9c-880272446f53"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/12fb4f62-6a49-48b0-9e9c-880272446f53"
     }
   }
 }
