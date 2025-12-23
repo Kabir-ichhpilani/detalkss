@@ -60,10 +60,22 @@ export default function ChatScreen() {
     };
 
     const startSearching = () => {
+        console.log("🔍 [Chat] Starting search...");
+        console.log("🔍 [Chat] Socket connected?", socket.connected);
+        console.log("🔍 [Chat] Socket ID:", socket.id);
+
+        if (!socket.connected) {
+            console.error("❌ [Chat] Socket not connected!");
+            Alert.alert("Connection Error", "Please check your internet connection and try again.");
+            return;
+        }
+
         setStatus('searching');
         setMessages([]);
         setPartnerDisconnected(false);
+        console.log("🔍 [Chat] Emitting join_call_queue with problem: chat");
         socket.emit('join_call_queue', { problem: 'chat' }); // Using 'chat' as the 'problem' key to separate from voice
+        console.log("🔍 [Chat] join_call_queue emitted");
     };
 
     const leaveChat = () => {

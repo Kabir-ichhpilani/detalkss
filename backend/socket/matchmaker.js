@@ -7,10 +7,16 @@ const currentPartner = new Map(); // socketId -> partnerSocketId
 export default function installMatchmaker(io, socket) {
     // join a problem queue
     socket.on("join_call_queue", ({ problem }) => {
-        if (!problem) return socket.emit("error", { message: "missing_problem" });
+        console.log(`📥 [Matchmaker] join_call_queue received from ${socket.id} with problem: ${problem}`);
+
+        if (!problem) {
+            console.error(`❌ [Matchmaker] Missing problem from ${socket.id}`);
+            return socket.emit("error", { message: "missing_problem" });
+        }
 
         // if already queued, ignore
         if (socketToQueueKey.get(socket.id) === problem) {
+            console.log(`ℹ️ [Matchmaker] ${socket.id} already in queue for ${problem}`);
             return socket.emit("searching");
         }
 
@@ -25,6 +31,7 @@ export default function installMatchmaker(io, socket) {
             q.push(socket.id);
             queues.set(problem, q);
             socketToQueueKey.set(socket.id, problem);
+            console.log(`🔍 [Matchmaker] ${socket.id} is now searching for ${problem}. Queue size: ${q.length}`);
             socket.emit("searching");
             return;
         }
@@ -37,11 +44,14 @@ export default function installMatchmaker(io, socket) {
         socketToQueueKey.delete(partnerId);
         socketToQueueKey.delete(socket.id);
 
-        const roomId = `room_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+        const roomId = `room_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+        console.log(`🤝 [Matchmaker] Matching ${socket.id} with ${partnerId} in room ${roomId} for problem: ${problem}`);
 
         const partnerSocket = io.sockets.sockets.get(partnerId);
         if (!partnerSocket) {
             // partner disconnected unexpectedly — re-enqueue this socket
+            console.warn(`⚠️ [Matchmaker] Partner ${partnerId} disconnected, re-enqueueing ${socket.id}`);
             enqueueSocket(problem, socket);
             return;
         }
@@ -56,6 +66,7 @@ export default function installMatchmaker(io, socket) {
         currentPartner.set(partnerId, socket.id);
 
         partnerSocket.emit("matched", { roomId, partnerId: socket.id });
+        console.log(`✅ [Matchmaker] Match complete! Room: ${roomId}`);
     });
 
     socket.on("leave_call_queue", () => {

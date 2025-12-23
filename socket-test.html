@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Connection Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .searching {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #logs {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+        .error {
+            border-left-color: #dc3545;
+            color: #dc3545;
+        }
+        .success {
+            border-left-color: #28a745;
+            color: #28a745;
+        }
+        .info {
+            border-left-color: #17a2b8;
+            color: #17a2b8;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 300px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Socket.IO Connection Test</h1>
+        
+        <div>
+            <label for="serverUrl">Server URL:</label><br>
+            <input type="text" id="serverUrl" value="https://detalkss-1.onrender.com" placeholder="Enter server URL">
+        </div>
+
+        <div id="status" class="status disconnected">
+            ❌ Disconnected
+        </div>
+
+        <div>
+            <button id="connectBtn" onclick="connectSocket()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnectSocket()" disabled>Disconnect</button>
+            <button id="testCallBtn" onclick="testCall()" disabled>Test Call Queue</button>
+            <button id="testChatBtn" onclick="testChat()" disabled>Test Chat Queue</button>
+            <button id="clearLogsBtn" onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        const statusDiv = document.getElementById('status');
+        const logsDiv = document.getElementById('logs');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const testCallBtn = document.getElementById('testCallBtn');
+        const testChatBtn = document.getElementById('testChatBtn');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateStatus(text, className) {
+            statusDiv.textContent = text;
+            statusDiv.className = `status ${className}`;
+        }
+
+        function connectSocket() {
+            const url = document.getElementById('serverUrl').value;
+            log(`Attempting to connect to: ${url}`, 'info');
+            
+            socket = io(url, {
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+            });
+
+            socket.on('connect', () => {
+                log(`✅ Connected! Socket ID: ${socket.id}`, 'success');
+                updateStatus(`✅ Connected (ID: ${socket.id})`, 'connected');
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                testCallBtn.disabled = false;
+                testChatBtn.disabled = false;
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`❌ Disconnected. Reason: ${reason}`, 'error');
+                updateStatus('❌ Disconnected', 'disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                testCallBtn.disabled = true;
+                testChatBtn.disabled = true;
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`❌ Connection error: ${error.message}`, 'error');
+                updateStatus('❌ Connection Error', 'disconnected');
+            });
+
+            socket.on('searching', () => {
+                log('🔍 Received "searching" event', 'info');
+                updateStatus('🔍 Searching for match...', 'searching');
+            });
+
+            socket.on('matched', ({ roomId, partnerId }) => {
+                log(`🤝 Matched! Room: ${roomId}, Partner: ${partnerId}`, 'success');
+                updateStatus(`🤝 Matched in room ${roomId}`, 'connected');
+            });
+
+            socket.on('partner-left', () => {
+                log('👋 Partner left', 'info');
+            });
+
+            socket.on('error', (error) => {
+                log(`❌ Socket error: ${JSON.stringify(error)}`, 'error');
+            });
+        }
+
+        function disconnectSocket() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                log('Disconnected manually', 'info');
+            }
+        }
+
+        function testCall() {
+            if (!socket || !socket.connected) {
+                log('❌ Not connected!', 'error');
+                return;
+            }
+            log('📞 Emitting join_call_queue with problem: "none"', 'info');
+            socket.emit('join_call_queue', { problem: 'none' });
+        }
+
+        function testChat() {
+            if (!socket || !socket.connected) {
+                log('❌ Not connected!', 'error');
+                return;
+            }
+            log('💬 Emitting join_call_queue with problem: "chat"', 'info');
+            socket.emit('join_call_queue', { problem: 'chat' });
+        }
+
+        function clearLogs() {
+            logsDiv.innerHTML = '';
+        }
+
+        // Auto-connect on load
+        window.addEventListener('load', () => {
+            log('Page loaded. Click "Connect" to test socket connection.', 'info');
+        });
+    </script>
+</body>
+</html>

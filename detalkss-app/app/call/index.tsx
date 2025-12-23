@@ -202,7 +202,7 @@ export default function CallScreen() {
         setDebuggerKey(prev => prev + 1);
     }
 
-    const getStatusColor = () => {
+    const getStatusColor = (): [string, string] => {
         switch (status) {
             case "idle": return ["#667eea", "#764ba2"];
             case "searching": return ["#f093fb", "#f5576c"];

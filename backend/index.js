@@ -36,10 +36,19 @@ const io = new Server(server, {
     cors: { origin: "*" },
 });
 
+console.log("🔌 [Server] Socket.IO server initialized");
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        socketConnections: io.sockets.sockets.size
+    });
+});
 
 io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.id);
+    console.log("✅ [Server] Socket connected:", socket.id, "| Total connections:", io.sockets.sockets.size);
 
     // install matching handlers on this socket
     matchmaker(io, socket);
@@ -48,7 +57,7 @@ io.on("connection", (socket) => {
     callHandler(io, socket);
 
     socket.on("disconnect", (reason) => {
-        console.log("disconnect", socket.id, reason);
+        console.log("❌ [Server] Socket disconnect:", socket.id, "Reason:", reason, "| Remaining:", io.sockets.sockets.size - 1);
         matchmaker.handleDisconnect(socket);
     });
 });

@@ -1,4 +1,4 @@
-import { View, Text, Image, Pressable } from "react-native";
+import { View, Text, Image, Pressable, Alert } from "react-native";
 import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,20 +7,41 @@ export default function SignUpScreen() {
     const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
 
     const handleGoogle = async () => {
+        console.log("👆 [SignUp] User clicked Continue with Google");
         try {
-            const { createdSessionId, setActive } = await startOAuthFlow({
+            console.log("⏳ [SignUp] Starting OAuth Flow...");
+            const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow({
                 redirectUrl: "detalkssapp://oauth-native-callback",
             });
 
+            console.log("🔗 [SignUp] OAuth Response received:", {
+                hasSession: !!createdSessionId,
+                hasSetActive: !!setActive,
+                signUpStatus: signUp?.status,
+                signInStatus: signIn?.status
+            });
+
             if (createdSessionId && setActive) {
+                console.log("✅ [SignUp] Session created! Setting active session...");
                 await setActive({ session: createdSessionId });
-                // Router redirection is handled by _layout.tsx listener, but we can do it here too just in case
-                // router.replace("/home"); 
+                console.log("✨ [SignUp] setActive successful");
             } else {
-                // Use fallback for other cases (e.g. requires 2FA)
+                // If it's an existing user, we might need to handle signIn status
+                const signInStatus = signIn?.status as string;
+                const signUpStatus = signUp?.status as string;
+
+                if (signInStatus === "needs_second_factor") {
+                    Alert.alert("2FA Required", "This account requires Two-Factor Authentication. Please sign in via a web browser first.");
+                } else if (signUpStatus === "missing_requirements") {
+                    Alert.alert("Incomplete Profile", "Some information is missing (likely a username). Please sign in via web to complete your profile.");
+                } else {
+                    console.warn("⚠️ [SignUp] No session. Status:", { signUpStatus, signInStatus });
+                    Alert.alert("Login Incomplete", `Status: ${signInStatus || signUpStatus || 'Unknown'}`);
+                }
             }
-        } catch (err) {
-            console.log("Google Sign-In Error:", err);
+        } catch (err: any) {
+            console.error("❌ [SignUp] Google Sign-In Error:", err);
+            Alert.alert("Connection Error", err.message || "Failed to connect to Google.");
         }
     };
 

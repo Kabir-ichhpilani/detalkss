@@ -19,9 +19,15 @@ export default function HomeScreen() {
     const panPos = useRef(new Animated.Value(0.5)).current;
 
     async function saveUserToBackend() {
+        console.log("💾 [Home] Attempting to save user to backend...");
         try {
             const token = await getToken();
-            console.log("Saving user to:", `${API_URL}/api/user/save`);
+            if (!token) {
+                console.warn("⚠️ [Home] No auth token available yet.");
+                return;
+            }
+
+            console.log("📡 [Home] Sending POST to:", `${API_URL}/api/user/save`);
             const res = await fetch(`${API_URL}/api/user/save`, {
                 method: "POST",
                 headers: {
@@ -29,32 +35,36 @@ export default function HomeScreen() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    // @ts-ignore
                     clerkId: user?.id,
-                    // @ts-ignore
                     email: user?.primaryEmailAddress?.emailAddress,
-                    // @ts-ignore
-                    username: user?.username,
+                    username: user?.username || user?.firstName || "Anonymous",
                     gender: "male",
                     problem: "none",
                     condition: "healthy",
                 }),
             });
+
             const text = await res.text();
+            console.log("📥 [Home] Backend raw response:", text);
+
             try {
                 const data = JSON.parse(text);
-                console.log("Saved user:", data);
+                console.log("✅ [Home] User saved successfully:", data);
             } catch (jsonError) {
-                console.error("Failed to parse response:", text);
+                console.error("❌ [Home] Failed to parse backend JSON response:", text);
             }
         } catch (error) {
-            console.log("Error saving user:", error);
+            console.error("❌ [Home] Error saving user to backend:", error);
         }
     }
 
     useEffect(() => {
-        if (!isLoaded || !user) return;
-        saveUserToBackend();
+        if (isLoaded && user) {
+            console.log("👤 [Home] User loaded:", user.id);
+            saveUserToBackend();
+        } else if (isLoaded && !user) {
+            console.warn("👤 [Home] User is loaded but null.");
+        }
     }, [isLoaded, user]);
 
     const handleNotification = () => {
